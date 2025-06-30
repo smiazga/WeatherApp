@@ -8,6 +8,9 @@
                 if (!res.ok) {
                     console.error(`HTTP error: ${res.status}`);
                 }
+
+                DotNet.invokeMethodAsync('WeatherApp', 'ShowFavoriteButton', cityName)
+
                 return res.json();
             })
             .then(data => resolve(data))

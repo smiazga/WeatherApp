@@ -1,5 +1,7 @@
 ﻿@page "/"
+@using System.Text.Json
 @using WeatherApp.Dtos
+@using WeatherApp.Models
 @rendermode InteractiveServer
 @inject IJSRuntime JSRuntime
 
@@ -11,7 +13,10 @@
             <div class="input-group">
                 <input type="text" placeholder="Search for a city..." class="form-control" id="weatherCity" @bind="weatherCity">
                 <button class="btn btn-outline-secondary" @onclick="() => CheckWeatherAsync(weatherCity)">Check weather</button>
-                <button class="btn btn-outline-secondary">Favorite</button>
+                @if (isShowFavorite)
+                {
+                    <button class="btn btn-outline-secondary" onclick="favoriteCity()">Favorite @CityName</button>
+                }
             </div>
 
             <hr />
@@ -44,6 +49,10 @@
 
 @code{
     private string weatherCity = "";
+    private static Boolean isShowFavorite = false;
+    private static string CityName = "";
+    private DotNetObjectReference<Home> dotnetHelper;
+
     private WeatherResponse weatherResponse = new WeatherResponse();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -53,6 +62,9 @@
             // await JSRuntime.InvokeVoidAsync("alert", "Welcome to this course!");
             //await JSRuntime.InvokeVoidAsync("localStorage.setItem", "welcomeTxt", "Welcome to this course!");
 
+            dotnetHelper = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("jsHelper.setDotNetHelper", dotnetHelper);
+
             await JSRuntime.InvokeVoidAsync("import", "/scripts/custom.js");
         }
     }
@@ -61,4 +73,46 @@
     {
         weatherResponse = await JSRuntime.InvokeAsync<WeatherResponse>("checkWeather", cityName);
     }
+
+    [JSInvokable]
+    public static async Task ShowFavoriteButton(string cityName)
+    {
+        CityName = cityName;
+        isShowFavorite = true;
+    }
+
+    [JSInvokable]
+    public async Task FavoriteCity()
+    {
+        //Get all items
+        var items = await JSRuntime.InvokeAsync<List<FavoritedCity>>("localStorage.getItem", "favoriteCities");
+
+        if (items == null)
+        {
+            items = new List<FavoritedCity>();
+        }
+
+        //Update the list
+        items.Add(new FavoritedCity()
+        {
+            Id = 1,
+            CityName = CityName
+        });
+
+        //Set new item
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "favoriteCities", JsonSerializer.Serialize(items));
+    }
 }
+
+<script>
+
+    var jsHelper = {};
+    jsHelper.setDotNetHelper = function (helper) {
+        jsHelper.dotnetHelper = helper;
+    }
+
+    function favoriteCity() {
+        jsHelper.dotnetHelper.invokeMethodAsync('FavoriteCity');
+    }
+
+</script>

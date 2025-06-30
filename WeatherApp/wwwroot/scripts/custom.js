@@ -1,23 +1,16 @@
-﻿//window.checkWeather = () => {
-//    let weatherCityName = document.getElementById("weatherCity").value;
-//    alert(weatherCityName)
-//}
+﻿window.checkWeather = (cityName) => {
 
-window.checkWeather = (cityName) => {
-    //alert(cityName)
     const API_KEY = "64f60853740a1ee3ba20d0fb595c97d5"
 
-    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${API_KEY}&units=metric`)
-        .then(res => {
-            if (!res.ok) {
-                console.error(`HTTP error: ${res.status}`);
-            }
-            return res.json();
-        })
-        .then(data => {
-            console.log(data);
-        })
-        .catch(error => {
-            console.error('Error fetching weather data:', error);
-        })
+    return new Promise((resolve, reject) => {
+        fetch(`https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${API_KEY}&units=imperial`)
+            .then(res => {
+                if (!res.ok) {
+                    console.error(`HTTP error: ${res.status}`);
+                }
+                return res.json();
+            })
+            .then(data => resolve(data))
+            .catch(error => reject(error))
+    })
 }
